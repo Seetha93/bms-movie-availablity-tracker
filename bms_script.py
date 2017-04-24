@@ -32,7 +32,6 @@ def sendEmail(to, message):
     print 'done!'
     smtpserver.close()
 
-print(sys.argv[1:])
 baseUrl = "https://in.bookmyshow.com"
 url = baseUrl+"/"+sys.argv[3]+"/movies"
 
@@ -90,4 +89,4 @@ if 'moviePageLink' in locals() or 'moviePageLink' in globals():
         print(soldoutshow.find('a').text)
 if not('mailContent' in locals() or 'mailContent' in  globals()):
   mailContent = "Requested movie is not in now showing list in "+sys.argv[3]
-sendEmail('rsindhu1@gmail.com', mailContent)
+sendEmail(sys.argv[4], mailContent)
