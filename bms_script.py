@@ -16,6 +16,13 @@ import urllib2
 from bs4 import BeautifulSoup
 import smtplib
 from email.mime.text import MIMEText
+import cookielib
+from getpass import getpass
+import sys
+import os
+from stat import *
+from sms import SMS
+
 
 def sendEmail(to, message):
     gmail_user = 'forTesting0693@gmail.com'
@@ -43,19 +50,21 @@ movieContainers = soupContent.findAll("div", { "class" : "card-container" })
 
 for movieContainer in movieContainers:
   for movieDetail in movieContainer.find_all('div', {"class" : "detail"}):
-      movieLanguage = movieDetail.find('li', {"class" : "__language"}).text if movieDetail.find('li', {"class" : "__language"}) is not None else ''
-      # if movieLanguage is not None and movieLanguage.text.lower() == 'telugu':
-      #     if movieDetail.find('a', {"class" : "__movie-name"}).text.lower() == 'baahubali 2: the conclusion':
-      #         teluguAvailable = 1;
-      #         moviePageLink = movieDetail.find('a').get('href')
-      #         print(moviePageLink)
-      #         mailContent = "Baahubali Telugu available for booking";
-      #         print("Baahubali Telugu available for booking")
-      # if movieLanguage is not None and movieLanguage.text.lower() == 'tamil':
       if movieDetail.find('a', {"class" : "__movie-name"}).text.lower() == sys.argv[1]:
           #tamilAvailable = 1;
+          if movieDetail.find('ul', {"class" : "language-list"}) is not None:
+            movieLanguage = ''
+            availableLanguages = movieDetail.find_all('li', {"class" : "__language"})
+            for language in availableLanguages:
+              print language.text
+              movieLanguage = movieLanguage+language.text
+            print movieLanguage
+          else:
+            movieLanguage = movieDetail.find('li', {"class" : "__language"}).text if movieDetail.find('li', {"class" : "__language"}) is not None else ''
+          
           moviePageLink = movieDetail.find('a').get('href')
-          mailContent = sys.argv[1]+" available for booking";
+          smsContent  = sys.argv[1]+"("+movieLanguage+") available for booking"
+          mailContent = sys.argv[1]+"("+movieLanguage+") available for booking"
           print(sys.argv[1]+"("+movieLanguage+") available for booking")
 
 # Looking for shows #
@@ -89,4 +98,12 @@ if 'moviePageLink' in locals() or 'moviePageLink' in globals():
         print(soldoutshow.find('a').text)
 if not('mailContent' in locals() or 'mailContent' in  globals()):
   mailContent = "Requested movie is not in now showing list in "+sys.argv[3]
+
+if not('smsContent' in locals() or 'smsContent' in  globals()):
+  smsContent = "Requested movie is not in now showing list in "+sys.argv[3]
+
+toSendList = ['8220683893', '8903466567', '9944052702', '8870842950']
+sms = SMS()
+for numbers in toSendList:
+    sms.send(numbers, smsContent);
 sendEmail(sys.argv[4], mailContent)
