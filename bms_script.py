@@ -58,15 +58,18 @@ for movieContainer in movieContainers:
             for language in availableLanguages:
               print language.text
               movieLanguage = movieLanguage+language.text
+              multilingual = 1
             print movieLanguage
           else:
             movieLanguage = movieDetail.find('li', {"class" : "__language"}).text if movieDetail.find('li', {"class" : "__language"}) is not None else ''
-          
+            multilingual = 0
+
           moviePageLink = movieDetail.find('a').get('href')
-          smsContent  = sys.argv[1]+"("+movieLanguage+") available for booking"
+          smsContent  = sys.argv[1]+"("+movieLanguage+") available for booking in"
           mailContent = sys.argv[1]+"("+movieLanguage+") available for booking"
           print(sys.argv[1]+"("+movieLanguage+") available for booking")
 
+print multilingual
 # Looking for shows #
 if 'moviePageLink' in locals() or 'moviePageLink' in globals():
   movieDetailsPage = urllib2.urlopen(baseUrl+moviePageLink)
@@ -79,6 +82,16 @@ if 'moviePageLink' in locals() or 'moviePageLink' in globals():
   bookingsPage = urllib2.urlopen(baseUrl+bookingLink+'20170428')
   bookingsPageContent = BeautifulSoup(bookingsPage)
 
+  if multilingual == 1:
+    getRequiredLanguageShows = bookingsPageContent.find('ul',{"id" : "filterLanguage"})
+    getLanguagesList = getRequiredLanguageShows.find_all('li', {"class" : "languages"})
+    for language in getLanguagesList:
+      if language.text.strip() == sys.argv[5].strip():
+        requiredLanguageLink = language.find('a').get('href')
+        smsContent  = sys.argv[1]+"("+language.text.strip()+") available for booking in"
+        bookingsPage = urllib2.urlopen(baseUrl+requiredLanguageLink)
+        bookingsPageContent = BeautifulSoup(bookingsPage)
+  
   venueListDiv = bookingsPageContent.find('ul', {"id" : "venuelist"})
   venueList = venueListDiv.find_all('li', {"class" : "list"})
   for venue in venueList:
@@ -88,6 +101,8 @@ if 'moviePageLink' in locals() or 'moviePageLink' in globals():
     availableShowTimings = showTimeInfo.find_all('a', {"class" : "__showtime-link"})
     soldOutShowTimings = showTimeInfo.find_all('div', {"class" : "_sold _soldout"})
     mailContent  = mailContent+"\n"+venueName+"\nAvailable Shows"
+    if len(availableShowTimings) > 0:
+      smsContent  = smsContent +" "+ venueName
     print(venueName)
     print("Available Shows")
     for availableshow in availableShowTimings:
@@ -96,13 +111,15 @@ if 'moviePageLink' in locals() or 'moviePageLink' in globals():
     print("Sold Out Shows")
     for soldoutshow in soldOutShowTimings:
         print(soldoutshow.find('a').text)
+
 if not('mailContent' in locals() or 'mailContent' in  globals()):
   mailContent = "Requested movie is not in now showing list in "+sys.argv[3]
 
 if not('smsContent' in locals() or 'smsContent' in  globals()):
   smsContent = "Requested movie is not in now showing list in "+sys.argv[3]
 
-toSendList = ['8220683893', '8903466567', '9944052702', '8870842950']
+smsContent = smsContent.replace('\n', ' ').replace('\r', '')
+toSendList = ['8220683893', '8903466567', '8870842950']
 sms = SMS()
 for numbers in toSendList:
     sms.send(numbers, smsContent);
